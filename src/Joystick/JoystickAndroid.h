@@ -44,6 +44,8 @@ private:
     int getKeyIndexByCode(int code);
     void sendChannelValue(int sbus, int ch, int value);
     bool getChannelValue(int keyCode, KeyConfiguration::KeyAction_t action, int *sbus, int *ch, int *value);
+    QString getConfigFilePath();
+    void updateJoystickConfigFile();
 
     int *btnCode;
     int *axisCode;
@@ -83,6 +85,7 @@ private:
 
     int deviceId;
     InputEventReader *eventReader;
+    QString _joystickConfigFilePath;
     QSettings *_configSaver;
 };
 

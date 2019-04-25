@@ -201,14 +201,18 @@ void InputEventReader::run(void)
                             qWarning() << "Unsupported key event, code: " << event.code;
                             continue;
                         }
-                        emit keyEventRecieved(keyEvent.keycode, keyEvent.action);
+                        if (QGuiApplication::applicationState() == Qt::ApplicationActive) {
+                            emit keyEventRecieved(keyEvent.keycode, keyEvent.action);
+                        }
                     } else if(event.type == EV_ABS) {
                         AxisEvent axisEvent = convertToAxisEvent(event.code, event.value);
                         if(axisEvent.axisCode < 0) {
                             qWarning() << "Unsupported motion event, code: " << event.code;
                             continue;
                         }
-                        emit axisEventRecieved(axisEvent.axisCode, axisEvent.value);
+                        if (QGuiApplication::applicationState() == Qt::ApplicationActive) {
+                            emit axisEventRecieved(axisEvent.axisCode, axisEvent.value);
+                        }
                     }
                 }
             }

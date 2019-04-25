@@ -109,6 +109,8 @@ private:
     void _saveKeyConfigToFile(int keyIndex);
     void _saveScrollWheelConfiguration();
     void _saveSWConfigToFile();
+    QString getConfigFilePath();
+    void updateKeyConfigFile();
 
     static int _deviceKeyCount;
     static KeySetting_t* _keySettingCache;
@@ -127,5 +129,6 @@ private:
     QString _keySettingGroup;
     QStringList _keyStringList;
     QStringList _controlModeList;
+    QString _keyConfigFilePath;
     QSettings *_configSaver;
 };

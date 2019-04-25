@@ -14,6 +14,21 @@
 #include "JoystickMessageSender.h"
 #include "KeyConfiguration.h"
 
+#define SBUS_MODE             0x20
+#define CHANNEL_IDEX          0x01
+#define SBUS_DATA_LEN         25
+#define SBUS_STARTBYTE        0x0f
+#define SBUS_ENDBYTE          0x00
+
+struct rc_msg {
+    /* typs is MSB, idex is LSB */
+    uint8_t type_idex;
+    /* sbus or ppm data */
+    uint8_t rc_data[SBUS_DATA_LEN];
+};
+
+static void pack_rc_channels_msg(int sbus, uint16_t (&channels)[16], struct rc_msg *msg);
+
 QGC_LOGGING_CATEGORY(JoystickMessageSenderLog, "JoystickMessageSenderLog")
 
 uint16_t JoystickMessageSender::_sbus0ChannelValues[12] = { 0 };
@@ -29,8 +44,13 @@ JoystickMessageSender::JoystickMessageSender(JoystickManager* joystickManager)
     , _remoteHostIp("192.168.0.10")
     , _mavlinkChannel(0)
     , _channelCount(16)
+    , _sbus1Enable(false)
 {
     connect(joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickMessageSender::_activeJoystickChanged);
+
+    if (_joystickManager->getRCSetting("SbusCtrl/Sbus1SendbyApp").toBool()) {
+        _sbus1Enable = true;
+    }
 }
 
 JoystickMessageSender::~JoystickMessageSender()
@@ -40,7 +60,6 @@ JoystickMessageSender::~JoystickMessageSender()
 void JoystickMessageSender::_setupJoystickLink()
 {
     UDPConfiguration* config = new UDPConfiguration(QString("Joystick"));
-    config->setLocalPort(_joystickPortNumber);
     config->addHost(_remoteHostIp, _joystickPortNumber);
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     config->setDynamic(true);
@@ -117,42 +136,12 @@ void JoystickMessageSender::_handleManualControl(float roll, float pitch, float 
     const float ch3 = (yaw+1) * axesScaling;
     const float ch4 = thrust * axesScaling;
 
-#if 0
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    mavlink_message_t message;
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_rc_channels_pack_chan(mavlink->getSystemId(), _joystickCompId,
-                                 _mavlinkChannel,
-                                 &message,
-                                 0, 0,
-                                 ch1, ch2, ch3, ch4,
-                                 _sbus0ChannelValues[0], _sbus0ChannelValues[1],
-                                 _sbus0ChannelValues[2], _sbus0ChannelValues[3],
-                                 _sbus0ChannelValues[4], _sbus0ChannelValues[5],
-                                 _sbus0ChannelValues[6], _sbus0ChannelValues[7],
-                                 _sbus0ChannelValues[8], _sbus0ChannelValues[9],
-                                 _sbus0ChannelValues[10], _sbus0ChannelValues[11],
-                                 0, 0, 255);
-    int len = mavlink_msg_to_send_buffer(buffer, &message);
-    _udpLink->writeBytesSafe((const char*)buffer, len);
+    if (_sbus1Enable) {
+        struct rc_msg message;
+        pack_rc_channels_msg(1, _sbus1ChannelValues, &message);
 
-    mavlink_msg_rc_channels_pack_chan(mavlink->getSystemId(), _joystickCompId,
-                                 _mavlinkChannel,
-                                 &message,
-                                 0, 1,
-                                 _sbus1ChannelValues[0], _sbus1ChannelValues[1],
-                                 _sbus1ChannelValues[2], _sbus1ChannelValues[3],
-                                 _sbus1ChannelValues[4], _sbus1ChannelValues[5],
-                                 _sbus1ChannelValues[6], _sbus1ChannelValues[7],
-                                 _sbus1ChannelValues[8], _sbus1ChannelValues[9],
-                                 _sbus1ChannelValues[10], _sbus1ChannelValues[11],
-                                 _sbus1ChannelValues[12], _sbus1ChannelValues[13],
-                                 _sbus1ChannelValues[14], _sbus1ChannelValues[15],
-                                 0, 0, 255);
-
-    len = mavlink_msg_to_send_buffer(buffer, &message);
-    _udpLink->writeBytesSafe((const char*)buffer, len);
-#endif
+        _udpLink->writeBytesSafe((const char*)&message, sizeof(struct rc_msg));
+    }
 }
 
 void JoystickMessageSender::_activeJoystickChanged(Joystick* joystick)
@@ -223,4 +212,59 @@ void JoystickMessageSender::setChannelValue(int sbus, int ch, uint16_t value)
 int JoystickMessageSender::channelCount()
 {
     return _channelCount;
+}
+
+static void pack_rc_channels_msg(int sbus, uint16_t (&channels)[16], struct rc_msg *msg)
+{
+    msg->type_idex = (sbus & CHANNEL_IDEX) | SBUS_MODE;
+    /* sbus protocol start byte:0xF0 */
+    msg->rc_data[0] = SBUS_STARTBYTE;
+    /* sbus protocol data1: channel1 0-7 bit */
+    msg->rc_data[1] =(channels[0] & 0xff);
+    /* sbus protocol data2: channel1 8-10 bit and channel2 0-4 */
+    msg->rc_data[2] =(((channels[0] >> 8) | (channels[1]<< 3)) & 0xff);
+    /* sbus protocol data3: channel2 5-10 bit and channel3 0-1 */
+    msg->rc_data[3] =(((channels[1] >> 5) | (channels[2] << 6)) & 0xff);
+    /* sbus protocol data4: channel3 2-9 bit */
+    msg->rc_data[4] =((channels[2] >> 2) & 0xff);
+    /* sbus protocol data5: channel3 10 bit and channel4 0-6 */
+    msg->rc_data[5] =(((channels[2] >> 10) | (channels[3] << 1)) & 0xff);
+    /* sbus protocol data6: channel4 7-10 bit and channel5 0-3 */
+    msg->rc_data[6] =(((channels[3] >> 7) | (channels[4] << 4)) & 0xff);
+    /* sbus protocol data7: channel5 4-10 bit and channel6 0 */
+    msg->rc_data[7] =(((channels[4] >> 4) | (channels[5] << 7)) & 0xff);
+    /* sbus protocol data8: channel6 1-8 bit */
+    msg->rc_data[8] =((channels[5] >> 1) & 0xff);
+    /* sbus protocol data9: channel6 9-10 bit and channel7 0-5 */
+    msg->rc_data[9] =(((channels[5] >> 9) | (channels[6] << 2)) & 0xff);
+    /* sbus protocol data10: channel7 6-10 bit and channel8 0-2 */
+    msg->rc_data[10] =(((channels[6] >> 6) | (channels[7] << 5)) & 0xff);
+    /* sbus protocol data11: channel8 3-10 bit */
+    msg->rc_data[11] =(((channels[7] >> 3)) & 0xff);
+
+    /* sbus protocol data12: channel9 0-7 bit */
+    msg->rc_data[12] =(channels[8] & 0xff);
+    /* sbus protocol data13: channel9 8-10 bit and channel10 0-4 */
+    msg->rc_data[13] =(((channels[8] >> 8) | (channels[9] << 3)) & 0xff);
+    /* sbus protocol data14: channel10 5-10 bit and channel11 0-1 */
+    msg->rc_data[14] =(((channels[9] >> 5) | (channels[10] << 6)) & 0xff);
+    /* sbus protocol data15: channel11 2-9 bit */
+    msg->rc_data[15] =((channels[10] >> 2) & 0xff);
+    /* sbus protocol data16: channel11 10 bit and channel12 0-6 */
+    msg->rc_data[16] =(((channels[10] >> 10) | (channels[11] << 1)) & 0xff);
+    /* sbus protocol data17: channel12 7-10 bit and channel13 0-3 */
+    msg->rc_data[17] =(((channels[11] >> 7) | (channels[12] << 4)) & 0xff);
+    /* sbus protocol data18: channel13 4-10 bit and channel14 0 */
+    msg->rc_data[18] =(((channels[12] >> 4) | (channels[13] << 7)) & 0xff);
+    /* sbus protocol data19: channel14 1-8 bit */
+    msg->rc_data[19] =((channels[13] >> 1) & 0xff);
+    /* sbus protocol data20: channel14 9-10 bit and channel15 0-5 */
+    msg->rc_data[20] =(((channels[13] >> 9) | (channels[14] << 2)) & 0xff);
+    /* sbus protocol data21: channel15 6-10 bit and channel16 0-2 */
+    msg->rc_data[21] =(((channels[14] >> 6) | (channels[15] << 5)) & 0xff);
+    /* sbus protocol data22: channel16 3-10 bit */
+    msg->rc_data[22] =((channels[15] >> 3) & 0xff);
+
+    msg->rc_data[23] = 0x00;
+    msg->rc_data[24] = SBUS_ENDBYTE;
 }

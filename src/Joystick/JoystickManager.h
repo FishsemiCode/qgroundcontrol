@@ -88,6 +88,7 @@ public:
     QQmlListProperty<KeyConfiguration> keyConfigurationList();
     KeyConfiguration* getKeyConfiguration(int index);
     JoystickMessageSender* joystickMessageSender(void) { return _joystickMessageSender; }
+    QVariant getRCSetting(QString key);
 
 public slots:
     void init();

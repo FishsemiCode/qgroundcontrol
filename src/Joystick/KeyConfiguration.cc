@@ -15,7 +15,6 @@
 #define SCALE_OFFSET 874
 #define SCALE_FACTOR 0.625
 #define KEY_CONFIG_FILENAME "KeysConfig.ini"
-#define RC_KEY_CONFIG_FILENAME "/data/rc-service/keyconfig.ini"
 
 QString KeyConfiguration::sControlModes[] = {
     "Undefine",
@@ -58,6 +57,7 @@ KeyConfiguration::KeyConfiguration(JoystickManager* joystickManager, int channel
 {
     _keySettingCache = new KeySetting_t[_deviceKeyCount*2];
     memset(_keySettingCache, 0, sizeof(KeySetting_t) * _deviceKeyCount * 2);
+    _keyConfigFilePath = getConfigFilePath();
     _configSaver = new QSettings(KEY_CONFIG_FILENAME, QSettings::IniFormat);
 
     for(int i = 0; i < _deviceKeyCount; i++) {
@@ -374,16 +374,7 @@ void KeyConfiguration::_saveKeyConfigToFile(int keyIndex)
     _configSaver->endGroup();
     _configSaver->sync();
 
-    std::ifstream infile(KEY_CONFIG_FILENAME);
-    std::ofstream outfile(RC_KEY_CONFIG_FILENAME);
-    char buf[2048];
-    while(infile) {
-        infile.read(buf, 2048);
-        outfile.write(buf, infile.gcount());
-    }
-
-    infile.close();
-    outfile.close();
+    updateKeyConfigFile();
 }
 
 void KeyConfiguration::_saveScrollWheelConfiguration()
@@ -408,16 +399,7 @@ void KeyConfiguration::_saveSWConfigToFile()
     _configSaver->endGroup();
     _configSaver->sync();
 
-    std::ifstream infile(KEY_CONFIG_FILENAME);
-    std::ofstream outfile(RC_KEY_CONFIG_FILENAME);
-    char buf[2048];
-    while(infile) {
-        infile.read(buf, 2048);
-        outfile.write(buf, infile.gcount());
-    }
-
-    infile.close();
-    outfile.close();
+    updateKeyConfigFile();
 }
 
 int KeyConfiguration::ppmToSbus(int ppm) {
@@ -722,4 +704,32 @@ QString KeyConfiguration::getKeyNameFromIndex(int index)
 QStringList KeyConfiguration::availableControlModes()
 {
     return _controlModeList;
+}
+
+QString KeyConfiguration::getConfigFilePath()
+{
+    QString dir, name;
+
+    dir = _joystickManager->getRCSetting("ConfigDir").toString();
+    name =  _joystickManager->getRCSetting("KeyconfigName").toString();
+
+    return dir + "/" + name;
+}
+
+void KeyConfiguration::updateKeyConfigFile()
+{
+    std::ifstream infile(KEY_CONFIG_FILENAME);
+    std::ofstream outfile(_keyConfigFilePath.toStdString());
+    if (!outfile) {
+        qWarning() << "open config file failed : " << _keyConfigFilePath;
+        return;
+    }
+    char buf[2048];
+    while (infile) {
+        infile.read(buf, 2048);
+        outfile.write(buf, infile.gcount());
+    }
+
+    infile.close();
+    outfile.close();
 }

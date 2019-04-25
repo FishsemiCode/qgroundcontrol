@@ -51,6 +51,8 @@ private:
     QString _remoteHostIp;
     int _mavlinkChannel;
     int _channelCount;
+    bool _sbus1Enable;
+
     static uint16_t _sbus0ChannelValues[12];//sbus0
     static uint16_t _sbus1ChannelValues[16];//sbus1
 };

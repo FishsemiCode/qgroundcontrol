@@ -12,7 +12,6 @@
 #define LONG_PRESS KeyConfiguration::keyAction_longPress
 #define LONG_PRESS_TIME 1000L//1000ms
 #define JOYSTICK_CONFIG_FILENAME "JoystickConfig.ini"
-#define RC_JOYSTICK_CONFIG_FILENAME "/data/rc-service/joystickconfig.ini"
 #define DEFAULT_MIN_CHANNEL_VALUE 364
 #define DEFAULT_MAX_CHANNEL_VALUE 1684
 
@@ -80,6 +79,7 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
 
     qCDebug(JoystickLog) << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
 
+    _joystickConfigFilePath = getConfigFilePath();
     eventReader = new InputEventReader();
     connect(eventReader, &InputEventReader::keyEventRecieved, this, &JoystickAndroid::_handleKeyEvent);
     connect(eventReader, &InputEventReader::axisEventRecieved, this, &JoystickAndroid::_handleGenericMotionEvent);
@@ -332,10 +332,29 @@ void JoystickAndroid::saveJoystickSettings()
     _configSaver->endGroup();
     _configSaver->sync();
 
+    updateJoystickConfigFile();
+}
+
+QString JoystickAndroid::getConfigFilePath()
+{
+    QString dir, name;
+
+    dir = _joystickManager->getRCSetting("ConfigDir").toString();
+    name =  _joystickManager->getRCSetting("JoystickconfigName").toString();
+
+    return dir + "/" + name;
+}
+
+void JoystickAndroid::updateJoystickConfigFile()
+{
     std::ifstream infile(JOYSTICK_CONFIG_FILENAME);
-    std::ofstream outfile(RC_JOYSTICK_CONFIG_FILENAME);
+    std::ofstream outfile(_joystickConfigFilePath.toStdString());
+    if (!outfile) {
+        qWarning() << "open config file failed : " << _joystickConfigFilePath;
+        return;
+    }
     char buf[2048];
-    while(infile) {
+    while (infile) {
         infile.read(buf, 2048);
         outfile.write(buf, infile.gcount());
     }
