@@ -387,7 +387,7 @@ void JoystickManager::_updateAvailableJoysticks(void)
 
 QVariant JoystickManager::getRCSetting(QString key)
 {
-    QSettings settings("/system/etc/gnd_service_config.ini", QSettings::IniFormat);
+    QSettings settings("/system/etc/gnd_service_config_optimus.ini", QSettings::IniFormat);
 
     return settings.value(key);
 }
