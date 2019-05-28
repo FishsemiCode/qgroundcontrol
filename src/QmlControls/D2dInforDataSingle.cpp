@@ -82,37 +82,63 @@ void D2dInforDataSingle::dataReceived()
        QTextStream stream(socket);
        vTemp = stream.readAll();
 
-       qCritical() << "D2dInforDataSingle localServer dataReceived:" << vTemp;
+       // add for check length
+       QByteArray mybyteArray = vTemp.toLatin1();
 
-       if (vTemp.contains(D2D_UL_DATA_RATE_TAG))//D2D_UL_DATA_RATE_TAG  //
+       char *tmy = mybyteArray.data();
+       int messageLength = ((tmy[0] & 0xff) << 24)
+                           | ((tmy[1] & 0xff) << 16)
+                           | ((tmy[2] & 0xff) << 8)
+                           | (tmy[3] & 0xff);
+
+
+       //qCritical() << "D2dInforDataSingle dataReceived messageLength:" << messageLength;
+
+       QString tmpStr1 = QString(tmy+4);
+
+       if((tmpStr1.length()!= messageLength)||(tmpStr1.isEmpty()))
        {
-           QStringList tempList = vTemp.split(' ');
-           UlRateStr = tempList.at(1);
+           qCritical() << " D2dInforDataSingle localServer dataReceived error :" << vTemp;
+           return;
+       }
 
+       QStringList tempList = tmpStr1.split(' ');
+
+       /*
+       for(int i = 0; i < tempList.count();i++)
+       {
+           qCritical() << "D2dInforDataSingle tempList i = :" <<i << ",tempList.at(i) = " << tempList.at(i);
+       }*/
+
+       if (tempList.at(0) == QString(D2D_UL_DATA_RATE_TAG))//D2D_UL_DATA_RATE_TAG
+       {
+           if(tempList.count() < 2)
+               return;
+           UlRateStr = tempList.at(1);
            emit signalUpRate();
        }
-       else if (vTemp.contains(D2D_UPLINK_BANDWIDTH_CONFIG_TAG))
+       else if (tempList.at(0) == QString(D2D_UPLINK_BANDWIDTH_CONFIG_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
            emit uplinkCFG(index);
 
        }
-       else if (vTemp.contains(D2D_DOWNLINK_BANDWIDTH_CONFIG_TAG))
+       else if (tempList.at(0) == QString(D2D_DOWNLINK_BANDWIDTH_CONFIG_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
-
-
            int index = temp.toInt();
            emit downlinkCFG(index);
        }
-       else if(vTemp.contains(D2D_SNR_LIST_UPDATED_TAG)) //updata
+       else if(tempList.at(0) == QString(D2D_SNR_LIST_UPDATED_TAG)) //updata
        {
            getList();
        }
-       else if (vTemp.contains(D2D_FREQ_LIST_RECEIVED_TAG))//
+       else if (tempList.at(0) == QString(D2D_FREQ_LIST_RECEIVED_TAG))
        {
            sendCalibrationCmd(8);
            if(whichCalibrateFromFlag)
@@ -120,7 +146,7 @@ void D2dInforDataSingle::dataReceived()
                return;
            }
        }
-       else if (vTemp.contains(QGC_CMD_SUCCESS_TAG)) //receive
+       else if (tempList.at(0) == QString(QGC_CMD_SUCCESS_TAG)) //receive
        {
            if(sendCmdStr == "QGCFREQNEG")
            {
@@ -135,7 +161,7 @@ void D2dInforDataSingle::dataReceived()
            }
            emit setCurrentCalibrateValueSucceed();
        }
-       else if (vTemp.contains(QGC_CMD_FAIL_TAG)) //receive
+       else if (tempList.at(0) == QString(QGC_CMD_FAIL_TAG)) //receive
        {
            if(whichCalibrateFromFlag)
            {
@@ -145,14 +171,14 @@ void D2dInforDataSingle::dataReceived()
            }
            emit setCurrentCalibrateValueFalied();
        }
-       else if (vTemp.contains(D2D_FREQ_HOPPING_STATE_TAG))
+       else if (tempList.at(0) == QString(D2D_FREQ_HOPPING_STATE_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
            emit setCalibrateStr(tempList.at(1));
        }
-       else if (vTemp.contains(D2D_CALIBRATION_STATE_TAG))
+       else if (tempList.at(0) == QString(D2D_CALIBRATION_STATE_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            if(tempList.at(1)!= "0")
            {
                emit calibrateChecked();
@@ -162,9 +188,10 @@ void D2dInforDataSingle::dataReceived()
                emit calibrateNoChecked();
            }
        }
-       else if (vTemp.contains(D2D_SERVICE_STATUS_TAG))
+       else if (tempList.at(0) == QString(D2D_SERVICE_STATUS_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
            if(index == 3)
@@ -176,9 +203,10 @@ void D2dInforDataSingle::dataReceived()
                emit srvStateSingle(index);
            }
        }
-       else if (vTemp.contains(D2D_TX_POWER_CTRL_STATE_TAG))
+       else if (tempList.at(0) ==  QString(D2D_TX_POWER_CTRL_STATE_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
            if((index == 0) || (index == 1))
@@ -186,9 +214,10 @@ void D2dInforDataSingle::dataReceived()
                emit clPWRctlSingle(index);
            }
        }
-       else if (vTemp.contains(D2D_TX_ANT_BITMAP_TAG))
+       else if (tempList.at(0) == QString(D2D_TX_ANT_BITMAP_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
            if((index == 2) || (index == 1))
@@ -196,9 +225,10 @@ void D2dInforDataSingle::dataReceived()
                emit txAntCtrlSingle(index);
            }
        }
-       else if (vTemp.contains(D2D_RADIO_STATE_TAG))
+       else if (tempList.at(0) == QString(D2D_RADIO_STATE_TAG))
        {
-           QStringList tempList = vTemp.split(' ');
+           if(tempList.count() < 2)
+               return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
            if((index == RADIO_STATE_ON)&&(currentRadioState != RADIO_STATE_ON))
@@ -209,8 +239,7 @@ void D2dInforDataSingle::dataReceived()
        }
        else
        {
-           //tempStr = QString::number(datacount)  +"," + "other";
-           //qCritical() << "unknown d2d info message tag, ignore" ;
+           qCritical() << "unknown d2d info message tag, ignore :" << vTemp;
        }
     }
 }
