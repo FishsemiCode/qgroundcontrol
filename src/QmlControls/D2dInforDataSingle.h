@@ -36,6 +36,8 @@
 #define D2D_TX_ANT_BITMAP_TAG                 "TX_ANT_BITMAP"
 #define D2D_RADIO_STATE_TAG                   "RADIO_STAT"
 
+#define D2D_RSRP_GCS_M                   "RSRP_GCS_M"
+#define D2D_RSRP_GCS_S                   "RSRP_GCS_S"
 
 /* qgc cmd message tag definition */
 #define QGC_FREQ_NEGOTIATION_TAG              "QGCFREQNEG"
@@ -136,6 +138,14 @@ private:
     //D2D_RadioState
     int currentRadioState;
 
+    //SRV_STAT
+    bool srvStatType;
+
+
+    //for read data error
+    int readErrorNumber;
+    int readErrorLengh;
+
 public slots:
     void newLocalConnection();
     void dataReceived();
@@ -174,6 +184,9 @@ signals:
     //D2D_RadioState
     void updateRadioState();
 
+    //"RSRP_GCS_S" "RSRP_GCS_M"
+    void rsrpGcsSSingle(QString tmpStr);
+    void rsrpGcsMSingle(QString tmpStr);
 
 public:
     static void Destroy();
@@ -227,6 +240,10 @@ public:
 
     //QGCTXANTCTRL
     Q_INVOKABLE  void setClitxAntCtrl(int value);
+
+
+    //SRV_STAT
+    Q_INVOKABLE  bool getSrvStatType();
 
 };
 #endif // D2DINFORDATASINGLE_H

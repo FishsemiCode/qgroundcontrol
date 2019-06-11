@@ -213,29 +213,71 @@ Rectangle {
         }
         //rate
         QGCLabel {
-            id:                     showRatelabel
-            anchors.left:           testmainToolBarIndicators.right
-            anchors.top:            testmainToolBarIndicators.top
-            anchors.bottom:         testmainToolBarIndicators.bottom
-            text:                   qsTr("Rate:")
-            font.pointSize:         ScreenTools.mediumFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  qgcPal.colorRed
-        }
-        QGCLabel {
             id:                     d2dInforRateDataLable
-            anchors.left:           showRatelabel.right
-            anchors.top:            showRatelabel.top
-            anchors.bottom:         showRatelabel.bottom
-            text:                   qsTr("0kbps")
-            font.pointSize:         ScreenTools.mediumFontPointSize
+            anchors.right:          d2dInforGCS_LLable.left
+            anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            text:                   qsTr("Rate:0kbps")
+            font.pointSize:         ScreenTools.mediumFontPointSize* 0.8
             font.family:            ScreenTools.demiboldFontFamily
             color:                  qgcPal.colorRed
         }
         Connections {
             target:  pD2dInforData
             onSignalUpRate: {
-               d2dInforRateDataLable.text= pD2dInforData.getUlRateValue() + "kbps";
+                d2dInforRateDataLable.text= qsTr("Rate:") + pD2dInforData.getUlRateValue() + qsTr("kbps");
+            }
+        }
+        //"RSRP_GCS_L"
+        QGCLabel {
+            id:                     d2dInforGCS_LLable
+            anchors.right:          d2dInforGCS_RLable.left
+            anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            text:                   qsTr("GCS_L:0dBm")
+            font.pointSize:         ScreenTools.mediumFontPointSize* 0.8
+            font.family:            ScreenTools.demiboldFontFamily
+            color:                  qgcPal.colorRed
+        }
+        Connections {
+            target:  pD2dInforData
+            onRsrpGcsMSingle: {
+                if(pD2dInforData.getSrvStatType())
+                {
+                    d2dInforGCS_LLable.text= qsTr("GCS_L:") + tmpStr + qsTr("dBm");
+                }
+                else
+                {
+                    d2dInforGCS_LLable.text= qsTr("GCS_L:N/A");
+                }
+
+            }
+        }
+        //"RSRP_GCS_R"
+        QGCLabel {
+            id:                     d2dInforGCS_RLable
+            anchors.right:          parent.right
+            anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            text:                   qsTr("GCS_R:0dBm")
+            font.pointSize:         ScreenTools.mediumFontPointSize* 0.8
+            font.family:            ScreenTools.demiboldFontFamily
+            color:                  qgcPal.colorRed
+        }
+        Connections {
+            target:  pD2dInforData
+            onRsrpGcsSSingle: {
+                if(pD2dInforData.getSrvStatType())
+                {
+                    d2dInforGCS_RLable.text= qsTr("GCS_R:") + tmpStr + qsTr("dBm");
+                }
+                else
+                {
+                    d2dInforGCS_RLable.text= qsTr("GCS_R:N/A");
+                }
             }
         }
         //end
@@ -378,6 +420,7 @@ Rectangle {
     Connections {
         target:  pD2dInforData
         onSrvStateSingle: {
+
             if(index == 3)
             {
                 resultDialog.close();

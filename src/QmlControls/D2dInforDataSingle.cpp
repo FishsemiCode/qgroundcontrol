@@ -28,8 +28,13 @@ D2dInforDataSingle::D2dInforDataSingle(QObject *parent) : QObject(parent)
     UlRateStr = "0";
     isCalibrateFlag = false;
     whichCalibrateFromFlag = false;
+    srvStatType = true;
     clPWRctl = 2;
     txAntCtrl = 0;
+
+    readErrorNumber = 0;
+    readErrorLengh = 0;
+
     currentRadioState = RADIO_STATE_ON;
 
     localServer = new QLocalServer(this);
@@ -82,6 +87,8 @@ void D2dInforDataSingle::dataReceived()
        QTextStream stream(socket);
        vTemp = stream.readAll();
 
+       qCritical() << " D2dInforDataSingle localServer dataReceived :" << vTemp;
+
        // add for check length
        QByteArray mybyteArray = vTemp.toLatin1();
 
@@ -92,14 +99,36 @@ void D2dInforDataSingle::dataReceived()
                            | (tmy[3] & 0xff);
 
 
-       //qCritical() << "D2dInforDataSingle dataReceived messageLength:" << messageLength;
+
 
        QString tmpStr1 = QString(tmy+4);
 
+       //qCritical() << "D2dInforDataSingle localServer dataReceived messageLength:" << messageLength << ",tmpStr1.length:" << tmpStr1.length();
+
        if((tmpStr1.length()!= messageLength)||(tmpStr1.isEmpty()))
        {
-           qCritical() << " D2dInforDataSingle localServer dataReceived error :" << vTemp;
-           return;
+           //qCritical() << " D2dInforDataSingle localServer dataReceived error :" << vTemp;
+
+           readErrorNumber++;
+           if(readErrorNumber == 1)
+           {
+               readErrorLengh = messageLength;
+               return;
+           }
+           else if((readErrorNumber == 2))
+           {
+               readErrorNumber = 0;
+               if(readErrorLengh == vTemp.length())
+               {
+                   tmpStr1 = vTemp;
+                   //qCritical() << "D2dInforDataSingle localServer dataReceived readErrorLengh == vTemp.length():";
+               }
+               else
+               {
+                   qCritical() << " D2dInforDataSingle localServer dataReceived error  return 1";
+                   return;
+               }
+           }
        }
 
        QStringList tempList = tmpStr1.split(' ');
@@ -194,6 +223,16 @@ void D2dInforDataSingle::dataReceived()
                return;
            QString temp = tempList.at(1);
            int index = temp.toInt();
+           if(index!=1)
+           {
+               srvStatType = false;
+           }
+           else
+           {
+               srvStatType = true;
+           }
+           emit srvStateSingle(index);
+           /*
            if(index == 3)
            {
                emit srvStateSingle(index);
@@ -202,6 +241,7 @@ void D2dInforDataSingle::dataReceived()
            {
                emit srvStateSingle(index);
            }
+           */
        }
        else if (tempList.at(0) ==  QString(D2D_TX_POWER_CTRL_STATE_TAG))
        {
@@ -236,6 +276,20 @@ void D2dInforDataSingle::dataReceived()
                emit updateRadioState();
            }
            currentRadioState = index;
+       }
+       else if (tempList.at(0) == QString(D2D_RSRP_GCS_M))//"RSRP_GCS_M"
+       {
+           if(tempList.count() < 2)
+               return;
+           QString tmpStr = tempList.at(1);
+           emit rsrpGcsMSingle(tmpStr);
+       }
+       else if (tempList.at(0) == QString(D2D_RSRP_GCS_S))//"RSRP_GCS_S"
+       {
+           if(tempList.count() < 2)
+               return;
+           QString tmpStr = tempList.at(1);
+           emit rsrpGcsSSingle(tmpStr);
        }
        else
        {
@@ -699,6 +753,10 @@ void D2dInforDataSingle::setClitxAntCtrl(int value)
     txAntCtrl = value;
 }
 
+bool D2dInforDataSingle::getSrvStatType()
+{
+    return srvStatType;
+}
 QString D2dInforDataSingle::getDataColorStr(int value)
 {
     if(value < -5)
