@@ -46,6 +46,8 @@ QGCView {
 
     property string intTostringValue
 
+    property real __testValue: 0
+
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     QGCViewPanel {
@@ -102,8 +104,14 @@ QGCView {
                             return;
                         __xcurrent = Math.floor(point.x);
                         manualSetValue.text = __xcurrent;
+
+                        //snr
+                         __currIndex = urDlCombo.currentIndex;
+                        manualSetValueSnr.text = pD2dInforData.getSNRValue(__xcurrent,__currIndex);
                      }
                 }
+
+
 
                 AreaSeries {
                     id:threepicture
@@ -163,7 +171,7 @@ QGCView {
             QGCCheckBox {
                 id:         pwRctrlCheckBox
                 anchors.left:          parent.left
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                //anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
                 anchors.bottom:         parent.bottom
                 text:       qsTr("PWRCTRL")
                 checked:       true
@@ -184,7 +192,7 @@ QGCView {
             QGCComboBox {
                 id:             txCombo
                 anchors.left:          pwRctrlCheckBox.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 width:                 manualBtn.width*1.2
                 anchors.bottom:         parent.bottom
                 model:          [qsTr("LEFT"), qsTr("RIGHT")]
@@ -201,7 +209,7 @@ QGCView {
             QGCComboBox {
                 id:             urulCombo
                 anchors.left:          txCombo.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 width:                 manualBtn.width*1.2
                 anchors.bottom:         parent.bottom
                 model:          [qsTr("UL_1.4M"), qsTr("UL_10M"), qsTr("UL_20M")]
@@ -215,7 +223,7 @@ QGCView {
             QGCComboBox {
                 id:             urDlCombo
                 anchors.left:          urulCombo.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 width:                 manualBtn.width*1.2
                 anchors.bottom:         parent.bottom
                 model:          [qsTr("DL_10M"), qsTr("DL_20M")]
@@ -232,7 +240,7 @@ QGCView {
             QGCButton {
                 id:                    calibrateButton
                 anchors.left:          urDlCombo.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 width:                 manualBtn.width*1.2
                 anchors.bottom:        parent.bottom
                 text:            qsTr("Calibrate")
@@ -243,6 +251,9 @@ QGCView {
 
                     manualSetValue.visible = !__isCalibrate;
                     labelRec.visible = !__isCalibrate;
+
+                    manualSetValueSnr.visible = !__isCalibrate;
+                    setValueSnrlabelRec.visible = !__isCalibrate;
 
                     okButton.visible = !__isCalibrate;
                     manualBtn.visible = !__isCalibrate;
@@ -257,12 +268,12 @@ QGCView {
                 }
             }
 
-
+            //Current average
             Rectangle{
                 id:                    showlabel
                 anchors.top:           calibrateButton.top
                 anchors.left:          calibrateButton.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 anchors.bottom:        parent.bottom
                 width:                 manualBtn.width
 
@@ -279,12 +290,12 @@ QGCView {
                 }
             }
 
-            //snr
+            //Current average snr
             Rectangle{
                 id:                    snrlabel
                 anchors.top:           calibrateButton.top
                 anchors.left:          showlabel.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                //anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
                 anchors.bottom:        parent.bottom
                 width:                 manualBtn.width*0.5
 
@@ -301,12 +312,12 @@ QGCView {
                 }
             }
 
-
+            //choice value
             Rectangle{
                 id:                    labelRec
                 anchors.top:           calibrateButton.top
                 anchors.left:          snrlabel.right
-                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 anchors.bottom:        parent.bottom
                 width:                 manualBtn.width
                 color:                 qgcPal.window
@@ -320,13 +331,40 @@ QGCView {
                     focus: true
                     inputMethodHints:       Qt.ImhFormattedNumbersOnly
                     anchors.verticalCenter: parent.verticalCenter
+                    verticalAlignment:      Text.AlignVCenter
+                    horizontalAlignment:    Text.AlignHCenter
+                    font.pointSize:         okButton.pointSize
                 }
             }
+
+
+            //choice value snr
+            Rectangle{
+                id:                    setValueSnrlabelRec
+                anchors.top:           calibrateButton.top
+                anchors.left:          labelRec.right
+                //anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.bottom:        parent.bottom
+                width:                 manualBtn.width*0.5
+
+                color:                 qgcPal.window
+                border.width:          1
+                Text{
+                    id:                     manualSetValueSnr
+                    anchors.fill:           parent
+                    text:                   qsTr("snr1")
+                    //visible:                false
+                    verticalAlignment:      Text.AlignVCenter
+                    horizontalAlignment:    Text.AlignHCenter
+                    font.pointSize:         okButton.pointSize
+                }
+            }
+
 
             QGCButton {
                 id:                     okButton
                 anchors.right:          manualBtn.left
-                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 anchors.bottom:         parent.bottom
                 text:                   qsTr("OK")
                 onClicked: {
@@ -381,7 +419,7 @@ QGCView {
             QGCButton {
                 id:                     manualBtn
                 anchors.right:          autoBtn.left
-                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth*0.5
+                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth*0.3
                 anchors.bottom:         parent.bottom
                 text:                   qsTr("Manual")
                 checkable:              true
@@ -390,6 +428,10 @@ QGCView {
                 onClicked:{
                     manualSetValue.visible = true;
                     labelRec.visible = true;
+
+                    manualSetValueSnr.visible = true;
+                    setValueSnrlabelRec.visible = true;
+
                     okButton.checkable = true;
                     okButton.checked = false;
 
@@ -407,7 +449,7 @@ QGCView {
             QGCButton {
                 id:                     autoBtn
                 anchors.right:          parent.right
-                anchors.rightMargin:     ScreenTools.defaultFontPixelWidth*0.5
+                //anchors.rightMargin:     ScreenTools.defaultFontPixelWidth*0.5
                 anchors.bottom:         parent.bottom
                 text:                   qsTr("Auto")
                 checkable:              true
@@ -415,6 +457,10 @@ QGCView {
                 onClicked:{
                     manualSetValue.visible = false;
                     labelRec.visible = false;
+
+                    manualSetValueSnr.visible = false;
+                    setValueSnrlabelRec.visible = false;
+
                     okButton.checkable = false;
                     okButton.checked = false;
 
@@ -444,6 +490,9 @@ QGCView {
 
                         manualSetValue.visible = !__isCalibrate;
                         labelRec.visible = !__isCalibrate;
+
+                        manualSetValueSnr.visible = !__isCalibrate;
+                        setValueSnrlabelRec.visible = !__isCalibrate;
 
                         okButton.visible = !__isCalibrate;
                         manualBtn.visible = !__isCalibrate;
@@ -511,6 +560,9 @@ QGCView {
                         manualSetValue.visible = !__isCalibrate;
                         labelRec.visible = !__isCalibrate;
 
+                        manualSetValueSnr.visible = !__isCalibrate;
+                        setValueSnrlabelRec.visible = !__isCalibrate;
+
                         okButton.visible = !__isCalibrate;
                         manualBtn.visible = !__isCalibrate;
                         autoBtn.visible = !__isCalibrate;
@@ -546,6 +598,10 @@ QGCView {
                     if(tmpStr == "0"){
                         manualSetValue.visible = true;
                         labelRec.visible = true;
+
+                        manualSetValueSnr.visible = true;
+                        setValueSnrlabelRec.visible = true;
+
                         manualBtn.checked = true;
                         autoBtn.checked = false;
                         __isAuto = false;
@@ -553,6 +609,10 @@ QGCView {
                     else if(tmpStr == "1"){
                         manualSetValue.visible = false;
                         labelRec.visible = false;
+
+                        manualSetValueSnr.visible = false;
+                        setValueSnrlabelRec.visible = false;
+
                         manualBtn.checked = false;
                         autoBtn.checked = true;
                         __isAuto = true;
