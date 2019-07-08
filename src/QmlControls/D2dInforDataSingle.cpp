@@ -87,7 +87,7 @@ void D2dInforDataSingle::dataReceived()
        QTextStream stream(socket);
        vTemp = stream.readAll();
 
-       qCritical() << " D2dInforDataSingle localServer dataReceived :" << vTemp;
+       //qCritical() << " D2dInforDataSingle localServer dataReceived :" << vTemp;
 
        // add for check length
        QByteArray mybyteArray = vTemp.toLatin1();
