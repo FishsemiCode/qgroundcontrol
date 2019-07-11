@@ -131,5 +131,12 @@
     "longDescription":  "Enable Video Share with other devices.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "SaveSdCardEnable",
+    "shortDescription": "Save Video to SD card",
+    "longDescription":  "Enable video to be saved to SD card.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

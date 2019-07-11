@@ -38,3 +38,18 @@ void AndroidInterface::setSystemProperty(QString& prop_name, QString& prop_value
      QAndroidJniObject::callStaticObjectMethod("android/os/SystemProperties", "set", "(Ljava/lang/String;Ljava/lang/String;)V",
                                                prop.object<jstring>(), value.object<jstring>());
 }
+
+QString AndroidInterface::getSdcardPath()
+{
+    QAndroidJniObject value = QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "getSdcardPath",
+                            "()Ljava/lang/String;");
+    return value.toString();
+}
+
+void AndroidInterface::triggerMediaScannerScanFile(QString& file_path)
+{
+    QAndroidJniObject path = QAndroidJniObject::fromString(file_path);
+     QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "triggerMediaScannerScanFile",
+                                               "(Ljava/lang/String;)V",
+                                               path.object<jstring>());
+}

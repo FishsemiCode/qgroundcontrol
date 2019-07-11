@@ -964,6 +964,20 @@ QGCView {
                     }
                 }
                 Rectangle {
+                    height:                     ScreenTools.defaultFontPixelHeight * 2
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    FactCheckBox {
+                        id:                 saveSdCardEnable
+                        text:               qsTr("Save recorded video to SD card. (Directory: QGroundControl/Video)")
+                        fact:               QGroundControl.settingsManager.videoSettings.saveSdCardEnable
+                        anchors.left:       parent.left
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 12
+                    }
+                }
+                Rectangle {
                     height:                     videoRecCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade

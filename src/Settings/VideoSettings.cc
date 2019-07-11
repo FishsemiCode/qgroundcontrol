@@ -40,6 +40,7 @@ const char* VideoSettings::disableWhenDisarmedName ="DisableWhenDisarmed";
 const char* VideoSettings::videoResolutionName =    "VideoResolution";
 const char* VideoSettings::cameraIdName =           "cameraId";
 const char* VideoSettings::videoShareEnableName =   "VideoShareEnable";
+const char* VideoSettings::saveSdCardEnableName =   "SaveSdCardEnable";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
@@ -304,6 +305,14 @@ bool VideoSettings::setVideoShareEnabled(bool enabled)
     qDebug() << "Andoid property" << prop.toString() << "is be set to" << value.toString();
 #endif
     return true;
+}
+
+Fact* VideoSettings::saveSdCardEnable(void)
+{
+    if (!_saveSdCardEnableFact) {
+        _saveSdCardEnableFact = _createSettingsFact(saveSdCardEnableName);
+    }
+    return _saveSdCardEnableFact;
 }
 
 void VideoSettings::_configChanged(QVariant)

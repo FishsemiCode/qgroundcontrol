@@ -22,4 +22,6 @@ public:
     static void showToast(int id);
     static QString getSystemProperty(QString& prop_name, QString& defaultValue);
     static void setSystemProperty(QString& prop_name, QString& value);
+    static QString getSdcardPath();
+    static void triggerMediaScannerScanFile(QString& filename);
 };

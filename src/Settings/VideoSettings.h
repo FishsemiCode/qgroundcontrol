@@ -38,6 +38,7 @@ public:
     Q_PROPERTY(bool  streamConfigured       READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(Fact* videoShareEnable       READ videoShareEnable       CONSTANT)
     Q_PROPERTY(WifiSettings* videoShareSettings  READ videoShareSettings     CONSTANT)
+    Q_PROPERTY(Fact* saveSdCardEnable       READ saveSdCardEnable       CONSTANT)
 
     Fact* videoSource           (void);
     Fact* udpPort               (void);
@@ -58,6 +59,7 @@ public:
     Fact* videoShareEnable      (void);
     Q_INVOKABLE bool setVideoShareEnabled(bool enabled);
     WifiSettings* videoShareSettings(void) { return _videoShareSettings; }
+    Fact* saveSdCardEnable      (void);
 
     static const char* videoSettingsGroupName;
 
@@ -77,6 +79,7 @@ public:
     static const char* videoResolutionName;
     static const char* cameraIdName;
     static const char* videoShareEnableName;
+    static const char* saveSdCardEnableName;
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -109,6 +112,7 @@ private:
     SettingsFact* _cameraIdFact;
     SettingsFact* _videoShareEnableFact;
     WifiSettings* _videoShareSettings;
+    SettingsFact* _saveSdCardEnableFact;
 };
 
 #endif

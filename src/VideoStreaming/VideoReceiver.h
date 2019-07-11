@@ -94,6 +94,7 @@ private slots:
     void _handleError               ();
     void _handleEOS                 ();
     void _handleStateChanged        ();
+    void _handleRecordingChanged    ();
 #endif
 
 private:

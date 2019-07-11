@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -54,6 +55,9 @@ import android.net.wifi.WifiConfiguration;
 import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
+import android.media.MediaScannerConnection;
 
 import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
@@ -195,6 +199,50 @@ public class QGCActivity extends QtActivity
         Intent intent = new Intent(Intent.ACTION_DIAL);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         m_instance.startActivity(intent);
+    }
+
+    public static void showToast(final int toastId) {
+        m_instance.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (toastId < ToastStrings.length) {
+                    Toast.makeText(m_instance, ToastStrings[toastId], Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    public static String getSdcardPath() {
+        StorageManager storageManager = (StorageManager)m_instance.getSystemService(Activity.STORAGE_SERVICE);
+        List<StorageVolume> volumes = storageManager.getStorageVolumes();
+        Method mMethodGetPath;
+        String path = "";
+        for (StorageVolume vol : volumes) {
+            try {
+                mMethodGetPath = vol.getClass().getMethod("getPath");
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                continue;
+            }
+            try {
+                path = (String) mMethodGetPath.invoke(vol);
+            } catch (Exception e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            if (vol.isRemovable() == true) {
+                Log.i(TAG, "removable sd card mounted " + path);
+                return path;
+            } else {
+                Log.i(TAG, "storage mounted " + path);
+            }
+        }
+        return "";
+    }
+
+    public static void triggerMediaScannerScanFile(String path) {
+        MediaScannerConnection.scanFile(m_instance, new String[] { path }, null, null);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

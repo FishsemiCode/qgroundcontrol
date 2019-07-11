@@ -18,6 +18,7 @@
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
+#include "AndroidInterface.h"
 
 #include <QDebug>
 #include <QUrl>
@@ -80,6 +81,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
+    connect(this, &VideoReceiver::recordingChanged, this, &VideoReceiver::_handleRecordingChanged);
     _frameTimer.start(1000);
 #endif
 }
@@ -534,6 +536,16 @@ VideoReceiver::_handleStateChanged() {
 
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_handleRecordingChanged() {
+    if(!_recording && !_videoFile.isEmpty()) {
+        AndroidInterface::triggerMediaScannerScanFile(_videoFile);
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
 gboolean
 VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 {
@@ -653,7 +665,26 @@ VideoReceiver::startRecording(const QString &videoFile)
     }
 
     if(videoFile.isEmpty()) {
-        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        QString savePath;
+        if (_videoSettings->saveSdCardEnable()->rawValue().toBool()) {
+            savePath = AndroidInterface::getSdcardPath();
+            if (!savePath.isEmpty()) {
+                savePath = savePath + "/QGroundControl/Video";
+                QDir savePathDir(savePath);
+                if (!savePathDir.exists()) {
+                    QDir().mkpath(savePathDir.absolutePath());
+                    if (!savePathDir.exists()) {
+                        qgcApp()->showMessage(tr("Video will be saved to internal memory."));
+                        savePath = "";
+                    }
+                }
+            } else {
+                qgcApp()->showMessage(tr("SD card is not available. Video will be saved to internal memory."));
+            }
+        }
+        if (savePath.isEmpty()) {
+            savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        }
         if(savePath.isEmpty()) {
             qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
             return;
