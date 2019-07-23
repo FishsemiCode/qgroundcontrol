@@ -87,7 +87,7 @@ void D2dInforDataSingle::dataReceived()
        QTextStream stream(socket);
        vTemp = stream.readAll();
 
-       //qCritical() << " D2dInforDataSingle localServer dataReceived :" << vTemp;
+       qCritical() << " D2dInforDataSingle localServer dataReceived :" << vTemp;
 
        // add for check length
        QByteArray mybyteArray = vTemp.toLatin1();
@@ -290,6 +290,14 @@ void D2dInforDataSingle::dataReceived()
                return;
            QString tmpStr = tempList.at(1);
            emit rsrpGcsSSingle(tmpStr);
+       }
+       else if (tempList.at(0) == QString(D2D_FLY_DISTANCE_TAG))//"FLY_DISTANCE"
+       {
+           if(tempList.count() < 2)
+               return;
+           QString tmpStr = tempList.at(1);
+           int dastince = tmpStr.toInt();
+           emit flyDistanceSingle(dastince);
        }
        else
        {

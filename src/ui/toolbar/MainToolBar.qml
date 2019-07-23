@@ -32,6 +32,7 @@ Rectangle {
 
     property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
 
+    property bool __isFarDistance:false
 
     signal showSettingsView
     signal showSetupView
@@ -267,6 +268,53 @@ Rectangle {
             font.family:            ScreenTools.demiboldFontFamily
             color:                  qgcPal.colorRed
         }
+
+        //5 km away show
+        QGCLabel {
+            id:                     d2dInforShowLabel
+            anchors.right:          parent.right
+            anchors.margins:        ScreenTools.defaultFontPixelHeight*0.7
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            text:                   qsTr("Warning:More than 8 KM")
+            font.pointSize:         ScreenTools.mediumFontPointSize* 1.2
+            font.family:            ScreenTools.demiboldFontFamily
+            color:                  qgcPal.colorRed
+            visible:                false
+        }
+
+        Connections {
+            target:  pD2dInforData
+            onFlyDistanceSingle: {
+                if((dastince > 7000)&&(__isFarDistance === false)&&(dastince <= 8000))
+                {
+                    __isFarDistance = true;
+                    d2dInforShowLabel.text = qsTr("Warning:Close to 8 KM");
+                    d2dInforShowLabel.visible = true;
+                    d2dInforGCS_RLable.visible = false;
+                    d2dInforGCS_LLable.visible = false;
+                    d2dInforRateDataLable.visible = false;
+                }
+                else if(dastince > 8000)
+                {
+                    __isFarDistance = true;
+                    d2dInforShowLabel.text = qsTr("Warning:More than 8 KM");
+                    d2dInforShowLabel.visible = true;
+                    d2dInforGCS_RLable.visible = false;
+                    d2dInforGCS_LLable.visible = false;
+                    d2dInforRateDataLable.visible = false;
+                }
+                else if((dastince <= 7000)&&(__isFarDistance === true))
+                {
+                    __isFarDistance = false;
+                    d2dInforShowLabel.visible = false;
+                    d2dInforGCS_RLable.visible = true;
+                    d2dInforGCS_LLable.visible = true;
+                    d2dInforRateDataLable.visible = true;
+                }
+            }
+        }
+        //
         Connections {
             target:  pD2dInforData
             onRsrpGcsSSingle: {

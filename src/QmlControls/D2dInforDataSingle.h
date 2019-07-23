@@ -36,8 +36,9 @@
 #define D2D_TX_ANT_BITMAP_TAG                 "TX_ANT_BITMAP"
 #define D2D_RADIO_STATE_TAG                   "RADIO_STAT"
 
-#define D2D_RSRP_GCS_M                   "RSRP_GCS_M"
-#define D2D_RSRP_GCS_S                   "RSRP_GCS_S"
+#define D2D_RSRP_GCS_M                        "RSRP_GCS_M"
+#define D2D_RSRP_GCS_S                        "RSRP_GCS_S"
+#define D2D_FLY_DISTANCE_TAG                  "FLY_DISTANCE"
 
 /* qgc cmd message tag definition */
 #define QGC_FREQ_NEGOTIATION_TAG              "QGCFREQNEG"
@@ -188,6 +189,8 @@ signals:
     void rsrpGcsSSingle(QString tmpStr);
     void rsrpGcsMSingle(QString tmpStr);
 
+    //FLY_DISTANCE
+    void flyDistanceSingle(int dastince);
 public:
     static void Destroy();
     static D2dInforDataSingle *getD2dInforData();
