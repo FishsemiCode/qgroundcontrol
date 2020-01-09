@@ -232,16 +232,6 @@ void D2dInforDataSingle::dataReceived()
                srvStatType = true;
            }
            emit srvStateSingle(index);
-           /*
-           if(index == 3)
-           {
-               emit srvStateSingle(index);
-           }
-           else if(index == 6)
-           {
-               emit srvStateSingle(index);
-           }
-           */
        }
        else if (tempList.at(0) ==  QString(D2D_TX_POWER_CTRL_STATE_TAG))
        {
@@ -297,7 +287,7 @@ void D2dInforDataSingle::dataReceived()
                return;
            QString tmpStr = tempList.at(1);
            int dastince = tmpStr.toInt();
-           emit flyDistanceSingle(dastince);
+           //emit flyDistanceSingle(dastince);
        }
        else
        {
